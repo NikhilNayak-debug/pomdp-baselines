@@ -1,6 +1,8 @@
 # -*- coding: future_fstrings -*-
 import sys, os, time
 
+sys.path.insert(0,'/Users/nikhil/mit/pomdp-baselines')
+
 t0 = time.time()
 import socket
 import numpy as np

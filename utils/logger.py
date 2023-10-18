@@ -9,7 +9,8 @@ import tempfile
 from collections import OrderedDict, Set
 
 try:
-    from torch.utils.tensorboard import SummaryWriter
+    # from torch.utils.tensorboard import SummaryWriter
+    from tensorboardX import SummaryWriter
 except:
     from tensorboardX import SummaryWriter
 
