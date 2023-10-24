@@ -70,9 +70,12 @@ class WolpertEnv(gym.Env):
             self.state[0][[0, 2]] /= x_norm
 
         y = self.obs(self.state)
-        reward = -torch.mean(torch.square(torch.tensor([self.state[0][0], self.state[0][2]])))
+        reward = -torch.mean(torch.square(torch.tensor([self.state[0][0], self.state[0][2]]))).item()
         thresh = -0.04
-        if reward.item() > thresh:
+        print('reward', reward)
+        print('state', [self.state[0][0], self.state[0][2]])
+        # if reward.item() > thresh:
+        if reward > thresh:
             return y, reward, True, {}
         else:
             return y, reward, False, {}
