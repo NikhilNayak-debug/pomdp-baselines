@@ -1,4 +1,4 @@
-# -*- coding: future_fstrings -*-
+
 import os, sys
 import time
 
@@ -24,6 +24,8 @@ from utils import helpers as utl
 from torchkit import pytorch_utils as ptu
 from utils import evaluation as utl_eval
 from utils import logger
+
+from envs.wolpert.wolpert import WolpertEnv
 
 
 class Learner:
@@ -59,6 +61,7 @@ class Learner:
             "rmdp",
             "generalize",
             "atari",
+            "wolpert",
         ]
         self.env_type = env_type
 
@@ -106,6 +109,26 @@ class Learner:
 
             assert num_eval_tasks > 0
             self.train_env = gym.make(env_name)
+            self.train_env.seed(self.seed)
+            self.train_env.action_space.np_random.seed(self.seed)  # crucial
+
+            self.eval_env = self.train_env
+            self.eval_env.seed(self.seed + 1)
+
+            self.train_tasks = []
+            self.eval_tasks = num_eval_tasks * [None]
+
+            self.max_rollouts_per_task = 1
+            self.max_trajectory_len = self.train_env._max_episode_steps
+
+        elif self.env_type in [
+            "wolpert",
+        ]:  # pomdp/mdp task, using pomdp wrapper
+            import envs.pomdp
+            import envs.credit_assign
+
+            assert num_eval_tasks > 0
+            self.train_env = WolpertEnv()
             self.train_env.seed(self.seed)
             self.train_env.action_space.np_random.seed(self.seed)  # crucial
 
