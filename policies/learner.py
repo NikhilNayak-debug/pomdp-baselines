@@ -397,6 +397,7 @@ class Learner:
                 self.log_train_stats(train_stats)
 
         last_eval_num_iters = 0
+        print('total number of steps:', self.n_env_steps_total)
         while self._n_env_steps_total < self.n_env_steps_total:
             # collect data from num_rollouts_per_iter train tasks:
             env_steps = self.collect_rollouts(num_rollouts=self.num_rollouts_per_iter)
@@ -426,6 +427,7 @@ class Learner:
                 ):
                     # save models in later training stage
                     self.save_model(current_num_iters, perf)
+        print('Training is complete and successful!')
         self.save_model(current_num_iters, perf)
 
     @torch.no_grad()
@@ -871,7 +873,7 @@ class Learner:
                 "metrics/total_steps_eval_worst", total_steps_eval_worst.mean()
             )
 
-        elif self.env_type in ["pomdp", "credit", "atari"]:
+        elif self.env_type in ["pomdp", "credit", "atari", "wolpert"]:
             returns_eval, success_rate_eval, _, total_steps_eval = self.evaluate(
                 self.eval_tasks
             )

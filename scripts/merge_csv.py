@@ -2,7 +2,8 @@ import pandas as pd
 import numpy as np
 import os, sys
 import glob
-from scripts.constants import *
+sys.path.insert(0,'/n/home09/nnayak/mit/pomdp-baselines')
+from constants import *
 from absl import flags
 
 FLAGS = flags.FLAGS
@@ -30,7 +31,16 @@ results = []
 for path in file_paths:
     if "oracle" not in FLAGS.base_path and "oracle/" in path:
         continue
-    df = pd.read_csv(path)
+    try:
+        df = pd.read_csv(path)
+    except pd.errors.EmptyDataError:
+        print("The CSV file is empty or has no valid data.")
+        continue
+    except pd.errors.ParserError:
+        print("There was an issue parsing the CSV file.")
+        continue
+
+    # df = pd.read_csv(path)
     result = pd.DataFrame()  # to be filled
 
     # 1. record metrics data
@@ -98,6 +108,7 @@ for path in file_paths:
 
 results = pd.concat(results)
 os.makedirs(FLAGS.base_path.replace("logs", "data"), exist_ok=True)
+print(os.path.join(FLAGS.base_path.replace("logs", "data"), FLAGS.output_csv))
 results.to_csv(
     os.path.join(FLAGS.base_path.replace("logs", "data"), FLAGS.output_csv), index=False
 )

@@ -1,4 +1,3 @@
-# -*- coding: future_fstrings -*-
 import torch
 import numpy as np
 import os
@@ -104,6 +103,7 @@ def set_gpu_mode(mode, gpu_id=0):
     _gpu_id = gpu_id
     _use_gpu = mode
     device = torch.device(f"cuda:{gpu_id}" if _use_gpu else "cpu")
+    print('gpu_id', gpu_id)
 
 
 def gpu_enabled():

@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import os, sys
 import glob
-from scripts.constants import *
+from constants import *
 from absl import flags
 
 FLAGS = flags.FLAGS
