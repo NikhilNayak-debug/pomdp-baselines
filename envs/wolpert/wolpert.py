@@ -106,12 +106,12 @@ class WolpertEnv(gym.Env):
         
         if reward > thresh:
             print('destination reached successfully')
-            return y, 1e4, True, {}
+            return y, 1e4, True, {'success': True, 'state': self.state}
         elif reward < -100:
             print("failed, couldn't reach")
-            return y, 10*reward, True, {}
+            return y, 10*reward, True, {'success': False, 'state': self.state}
         else:
-            return y, reward, False, {}
+            return y, reward, False, {'state': self.state}
 
     def obs(self, x, visible=True):
         return np.array(torch.flatten(x))

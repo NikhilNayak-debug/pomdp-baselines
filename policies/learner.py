@@ -4,6 +4,7 @@ import time
 
 import math
 import numpy as np
+import pandas as pd
 import torch
 from torch.nn import functional as F
 import gym
@@ -613,6 +614,12 @@ class Learner:
         else:  # pomdp, rmdp, generalize
             num_steps_per_episode = self.eval_env._max_episode_steps
             observations = None
+        
+        columns = ['episode_num', 'step_num', 'state_0', 'state_1', 'state_2', 'state_3']
+        track_of_state = np.zeros((len(tasks), num_steps_per_episode))
+
+        # Create an empty DataFrame with the specified columns
+        df = pd.DataFrame(columns=columns)
 
         for task_idx, task in enumerate(tasks):
             step = 0
@@ -631,7 +638,7 @@ class Learner:
 
             for episode_idx in range(num_episodes):
                 running_reward = 0.0
-                for _ in range(num_steps_per_episode):
+                for step_number in range(num_steps_per_episode):
                     if self.agent_arch == AGENT_ARCHS.Memory:
                         (action, _, _, _), internal_state = self.agent.act(
                             prev_internal_state=internal_state,
@@ -649,7 +656,9 @@ class Learner:
                     next_obs, reward, done, info = utl.env_step(
                         self.eval_env, action.squeeze(dim=0)
                     )
-
+                                        
+                    df = df.append({'episode_num': task_idx, 'step_num': step_number, 'state_0': info['state'][0][0].item(), 'state_1': info['state'][0][1].item(), 'state_2': info['state'][0][2].item(), 'state_3': info['state'][0][3].item()}, ignore_index=True)
+                    
                     # add raw reward
                     running_reward += reward.item()
                     # clip reward if necessary for policy inputs
@@ -690,6 +699,11 @@ class Learner:
 
                 returns_per_episode[task_idx, episode_idx] = running_reward
             total_steps[task_idx] = step
+        
+        save_path = os.path.join(
+            logger.get_dir(), f"track_of_state.csv"
+        )
+        df.to_csv(save_path, index=False)
         return returns_per_episode, success_rate, observations, total_steps
 
     def log_train_stats(self, train_stats):
