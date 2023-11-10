@@ -2,7 +2,6 @@ import gym
 from gym import spaces
 import numpy as np
 import torch
-import random
 
 
 class WolpertEnv(gym.Env):
@@ -13,8 +12,6 @@ class WolpertEnv(gym.Env):
         self.control_size = 2
         # self.obs_size = 5
         self.obs_size = 4
-        
-        self.steps_so_far = 0
 
         self.A = torch.from_numpy(np.array([
             [0.0, 1.0, 0.0, 0.0],  # x
@@ -46,35 +43,34 @@ class WolpertEnv(gym.Env):
             low=-1.0, high=1.0, shape=(self.control_size,), dtype=np.float32)
 
         self.observation_space = spaces.Box(
-            low=-float('inf'), high=float('inf'), shape=(self.obs_size,), dtype=np.float32)
+            low=-20.0, high=20.0, shape=(self.obs_size,), dtype=np.float32)
         
-        index = random.randint(0, 7)
-        
-        self.state = torch.tensor([
-            [np.cos(index * 2 * np.pi / 8), 0.0, np.sin(index * 2 * np.pi / 8), 0.0]
-        ])
-        
+        initial_angle = np.random.uniform(0, 2 * np.pi)
+
         # self.state = torch.tensor([
-        #     [np.cos(initial_angle), 0.0, np.sin(initial_angle), 0.0]
+        #     [np.cos(index * 2 * np.pi / 8), 0.0, np.sin(index * 2 * np.pi / 8), 0.0]
         #     for index in range(1)
         # ])
+        
+        self.state = torch.tensor([
+            [np.cos(initial_angle), 0.0, np.sin(initial_angle), 0.0]
+            for index in range(1)
+        ])
 
         self._max_episode_steps = 200
 
     def reset(self):
         # Initialize the environment
+        initial_angle = np.random.uniform(0, 2 * np.pi)
         
-        self.steps_so_far = 0
-        
-        index = random.randint(0, 7)
-        
-        self.state = torch.tensor([
-            [np.cos(index * 2 * np.pi / 8), 0.0, np.sin(index * 2 * np.pi / 8), 0.0]
-        ])
         # self.state = torch.tensor([
-        #     [np.cos(initial_angle), 0.0, np.sin(initial_angle), 0.0]
+        #     [np.cos(index * 2 * np.pi / 8), 0.0, np.sin(index * 2 * np.pi / 8), 0.0]
         #     for index in range(1)
         # ])
+        self.state = torch.tensor([
+            [np.cos(initial_angle), 0.0, np.sin(initial_angle), 0.0]
+            for index in range(1)
+        ])
         
         return self.obs(self.state)
 
@@ -102,30 +98,22 @@ class WolpertEnv(gym.Env):
         #     self.state[0][[0, 2]] /= x_norm
 
         y = self.obs(self.state)
-        thresh = -0.01
+        reward = -torch.mean(torch.square(torch.tensor([self.state[0][0], self.state[0][2]]))).item()
+        thresh = -0.04
         
-        self.steps_so_far += 1
+        # print('reward', reward)
+        # print('state', [self.state[0][0], self.state[0][2]])
         
-        if self.steps_so_far == 200:
-            reward = -torch.mean(torch.square(torch.tensor(
-            [self.state[0][0], self.state[0][2]]
-        ))).item()
-            if reward>thresh:
-                print('destination reached successfully')
-                print('reward', reward)
-                return y, 1e4, True, {'success': True, 'state': self.state}
-            else:
-                print("failed, couldn't reach")
-                print('reward', reward)
-                return y, reward, True, {'success': False, 'state': self.state}
-            
+        if reward > thresh:
+            print('destination reached successfully')
+            return y, 1e4, True, {'success': True, 'state': self.state}
+        elif reward < -100:
+            print("failed, couldn't reach")
+            return y, 10*reward, True, {'success': False, 'state': self.state}
         else:
-            reward = 0
             return y, reward, False, {'state': self.state}
-        
 
     def obs(self, x, visible=True):
-        # print(x.size())
         return np.array(torch.flatten(x))
         # full_obs = x + torch.randn_like(x) @ self.obs_noise
         # full_obs = torch.cat([torch.ones(x.shape[:-1] + (1,)), full_obs], -1)
